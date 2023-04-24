@@ -1,24 +1,32 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-    _ "embed"
+	"os"
 
 	"github.com/getlantern/systray"
+	"gopkg.in/yaml.v2"
 )
 
 //go:embed "assets/icon.ico"
 var icon []byte
 
-const KIMAI_API = "https://kimai.curious-company.com/api/timesheets/"
 const RECENTS_ENDOINT = "recent?size=10"
 const ACTIVE_ENDOINT = "active"
 const RESTART_ENDPOINT = "%d/restart"
 const STOP_ENDPOINT = "%d/stop"
 
+type Config struct {
+    URL string `yaml:"url"`
+    Username string `yaml:"user"`
+    Token string `yaml:"token"`
+}
+
+var config Config
 var recentTasks []Task
 var activeTask Task
 
@@ -61,6 +69,18 @@ func getIcon(s string) []byte {
 }
 
 func main() {
+    homeDir, err := os.UserHomeDir()
+    file, err := ioutil.ReadFile(homeDir + "/.config/qckm/qckm.yaml")
+    if err != nil {
+        panic("config file failed to open -> " + err.Error())
+    }
+
+    config = Config{}
+    err = yaml.Unmarshal(file, &config)
+    if err != nil {
+        panic("config file parsing err -> " + err.Error()) 
+    }
+
     systray.Run(onReady, onExit)
 }
 
@@ -77,7 +97,6 @@ func onReady() {
             for {
                 select {
                 case <-recentEntry.ClickedCh:
-                    fmt.Printf("%d clicked \n", idx)
                     task := recentTasks[idx]
                     fmt.Printf("%s clicked \n", task.Project.Name)
                     RestartTask(task.Id, kimaiClient)
@@ -139,7 +158,6 @@ func SetupMenu(client http.Client, recentEntries []*systray.MenuItem, activeMenu
 }
 
 func GetMenuState(client http.Client) {
-
     recent, err := FetchRecent(client)
     if err == nil {
         recentTasks = recent
@@ -153,18 +171,28 @@ func GetMenuState(client http.Client) {
     }
 }
 
-func StopTask(id int, client http.Client) error {
-    fmt.Println("Stopping task with id %d", id)
-    requestUrl := KIMAI_API + fmt.Sprintf(STOP_ENDPOINT, id)
-
-    req, err := http.NewRequest(http.MethodPatch, requestUrl, nil)
+func BuildRequest(method string, endpoint string) (*http.Request, error) {
+    requestUrl := config.URL + endpoint 
+    fmt.Println("---- prepare request", method, " ", requestUrl)
+    req, err := http.NewRequest(method, requestUrl, nil)
     if err != nil {
         fmt.Println(err)
+        return nil, err
+    }
+
+    req.Header.Set("X-AUTH-USER", config.Username)
+    req.Header.Set("X-AUTH-TOKEN", config.Token)
+    return req, nil
+}
+
+func StopTask(id int, client http.Client) error {
+    fmt.Println("Stopping task with id ", id)
+
+    req, err := BuildRequest(http.MethodPatch, fmt.Sprintf(STOP_ENDPOINT, id))
+    if err != nil {
         return  err
     }
 
-    req.Header.Set("X-AUTH-USER", "flow")
-    req.Header.Set("X-AUTH-TOKEN", "Upload-Italics1-Flammable")
     _, err = client.Do(req)
     if err != nil {
         fmt.Println(err)
@@ -175,16 +203,11 @@ func StopTask(id int, client http.Client) error {
 }
 
 func RestartTask(id int, client http.Client) error {
-    requestUrl := KIMAI_API + fmt.Sprintf(RESTART_ENDPOINT, id)
-
-    req, err := http.NewRequest(http.MethodPatch, requestUrl, nil)
+    req, err := BuildRequest(http.MethodPatch, fmt.Sprintf(RESTART_ENDPOINT, id))
     if err != nil {
-        fmt.Println(err)
         return  err
     }
 
-    req.Header.Set("X-AUTH-USER", "flow")
-    req.Header.Set("X-AUTH-TOKEN", "Upload-Italics1-Flammable")
     _, err = client.Do(req)
     if err != nil {
         fmt.Println(err)
@@ -195,17 +218,13 @@ func RestartTask(id int, client http.Client) error {
 }
 
 func FetchActive(client http.Client) (Task, error) {
-    requestUrl := KIMAI_API + ACTIVE_ENDOINT
     var active Task
 
-    req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
+    req, err := BuildRequest(http.MethodGet, ACTIVE_ENDOINT)
     if err != nil {
-        fmt.Println(err)
         return active, err
     }
 
-    req.Header.Set("X-AUTH-USER", "flow")
-    req.Header.Set("X-AUTH-TOKEN", "Upload-Italics1-Flammable")
     res, err := client.Do(req)
     if err != nil {
         fmt.Println(err)
@@ -241,16 +260,11 @@ func FetchActive(client http.Client) (Task, error) {
 }
 
 func FetchRecent(client http.Client) ([]Task, error) {
-    requestUrl := KIMAI_API + RECENTS_ENDOINT
-
-    req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
+    req, err := BuildRequest(http.MethodGet, RECENTS_ENDOINT)
     if err != nil {
-        fmt.Println(err)
         return nil, err
     }
 
-    req.Header.Set("X-AUTH-USER", "flow")
-    req.Header.Set("X-AUTH-TOKEN", "Upload-Italics1-Flammable")
     res, err := client.Do(req)
     if err != nil {
         fmt.Println(err)
