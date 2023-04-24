@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+    _ "embed"
 
 	"github.com/getlantern/systray"
 )
+
+//go:embed "assets/icon.ico"
+var icon []byte
 
 const KIMAI_API = "https://kimai.curious-company.com/api/timesheets/"
 const RECENTS_ENDOINT = "recent?size=10"
@@ -63,7 +67,7 @@ func main() {
 func onReady() {
     kimaiClient := http.Client{}
 
-    systray.SetIcon(getIcon("assets/icon.ico"))
+    systray.SetIcon(icon)
     recentMenu := systray.AddMenuItem("Recent", "")
     var recentEntries []*systray.MenuItem
     i := 0
