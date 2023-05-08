@@ -2,7 +2,10 @@ module qckm
 
 go 1.20
 
-require github.com/getlantern/systray v1.2.1
+require (
+	github.com/heb-dtc/systray v0.0.0-20230508094411-e0dda58f7e6c
+	gopkg.in/yaml.v2 v2.4.0
+)
 
 require (
 	github.com/getlantern/context v0.0.0-20190109183933-c447772a6520 // indirect
@@ -14,5 +17,4 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	golang.org/x/sys v0.7.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

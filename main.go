@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/getlantern/systray"
+	"github.com/heb-dtc/systray"
 	"gopkg.in/yaml.v2"
 )
 
