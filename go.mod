@@ -3,7 +3,7 @@ module qckm
 go 1.20
 
 require (
-	github.com/heb-dtc/systray v0.0.0-20230508094411-e0dda58f7e6c
+	github.com/heb-dtc/systray v0.0.0-20230508120225-67d696447a3d
 	gopkg.in/yaml.v2 v2.4.0
 )
 
