@@ -18,6 +18,12 @@ github.com/heb-dtc/systray v0.0.0-20230508094411-e0dda58f7e6c h1:18uVfAVDIfJeqik
 github.com/heb-dtc/systray v0.0.0-20230508094411-e0dda58f7e6c/go.mod h1:42CxCO+2d8jFJQLUNQfHekm4Cr5doCBzHwILt9MrEXo=
 github.com/heb-dtc/systray v0.0.0-20230508120225-67d696447a3d h1:oWtideFtMk5u5lgsW+0vvCxPES1bp0hHQaOo/PQQgXM=
 github.com/heb-dtc/systray v0.0.0-20230508120225-67d696447a3d/go.mod h1:42CxCO+2d8jFJQLUNQfHekm4Cr5doCBzHwILt9MrEXo=
+github.com/heb-dtc/systray v0.0.0-20230508132058-e5d61886243d h1:FYjCY6xCSMzaCC2NmBBJe3uNQpNmJGowI+wayrYRamQ=
+github.com/heb-dtc/systray v0.0.0-20230508132058-e5d61886243d/go.mod h1:42CxCO+2d8jFJQLUNQfHekm4Cr5doCBzHwILt9MrEXo=
+github.com/heb-dtc/systray v0.0.0-20230508132959-3ef370955163 h1:bBmlQxJzzBBfZSNOhhJDqX/Qw/uAHxlC75GcK6MXrJM=
+github.com/heb-dtc/systray v0.0.0-20230508132959-3ef370955163/go.mod h1:42CxCO+2d8jFJQLUNQfHekm4Cr5doCBzHwILt9MrEXo=
+github.com/heb-dtc/systray v0.0.0-20230508134042-b04fec1f2577 h1:RXgYIaBKPeV1vmhfYLqWqiPxwUtq4MgDHh6jD6tpW3Q=
+github.com/heb-dtc/systray v0.0.0-20230508134042-b04fec1f2577/go.mod h1:42CxCO+2d8jFJQLUNQfHekm4Cr5doCBzHwILt9MrEXo=
 github.com/lxn/walk v0.0.0-20210112085537-c389da54e794/go.mod h1:E23UucZGqpuUANJooIbHWCufXvOcT6E7Stq81gU+CSQ=
 github.com/lxn/win v0.0.0-20210218163916-a377121e959e/go.mod h1:KxxjdtRkfNoYDCUP5ryK7XJJNTnpC8atvtmTheChOtk=
 github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c h1:rp5dCmg/yLR3mgFuSOe4oEnDDmGLROTvMragMUXpTQw=

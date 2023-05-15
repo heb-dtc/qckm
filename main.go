@@ -40,11 +40,6 @@ func (e NoActiveTaskErrror) Error() string {
 	return fmt.Sprintf("No active task")
 }
 
-type MenuState struct {
-	Recent []Task
-	Active Task
-}
-
 type Activity struct {
 	Name string `json:"name"`
 }
@@ -62,14 +57,6 @@ type Task struct {
 func (t Task) TextOutput() string {
 	p := fmt.Sprintf("[%s] %s", t.Project.Name, t.Activity.Name)
 	return p
-}
-
-func getIcon(s string) []byte {
-	b, err := ioutil.ReadFile(s)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return b
 }
 
 func main() {
@@ -91,18 +78,34 @@ func main() {
 func onReady() {
 	kimaiClient := http.Client{}
 	systray.SetIcon(icon)
+	recentMenu := systray.AddMenuItem("Recent", "")
+	systray.AddSeparator()
+	activeMenu := systray.AddMenuItem("Active", "")
+	systray.AddSeparator()
+	refreshAction := systray.AddMenuItem("Refresh", "Refresh the menu")
+	systray.AddSeparator()
+	systray.AddMenuItem("Quit", "Quit the whole app")
 
-	SetupMenu(kimaiClient)
+	go func() {
+		for {
+			select {
+			case <-refreshAction.ClickedCh:
+				SetupMenu(kimaiClient, recentMenu, activeMenu)
+			}
+		}
+	}()
+
+	SetupMenu(kimaiClient, recentMenu, activeMenu)
 }
 
 func onExit() {
 }
 
-func SetupMenu(client http.Client) {
+func SetupMenu(client http.Client, recentMenu *systray.MenuItem, activeMenu *systray.MenuItem) {
 	GetMenuState(client)
-	systray.Reset()
+	recentMenu.RemoveSubMenuItems()
+	activeMenu.RemoveSubMenuItems()
 
-	recentMenu := systray.AddMenuItem("Recent", "")
 	for i, task := range recentTasks {
 		recentEntry := recentMenu.AddSubMenuItem(task.TextOutput(), "")
 		go func(idx int) {
@@ -111,7 +114,10 @@ func SetupMenu(client http.Client) {
 				case <-recentEntry.ClickedCh:
 					task := recentTasks[idx]
 					fmt.Printf("%s clicked \n", task.Project.Name)
-					RestartTask(task.Id, client)
+					err := RestartTask(task.Id, client)
+					if err == nil {
+						SetupMenu(client, recentMenu, activeMenu)
+					}
 				}
 			}
 		}(i)
@@ -119,15 +125,16 @@ func SetupMenu(client http.Client) {
 		i++
 	}
 
-	systray.AddSeparator()
-	activeMenu := systray.AddMenuItem("Active", "")
 	activeEntry := activeMenu.AddSubMenuItem(activeTask.TextOutput(), "")
 	stopItem := activeMenu.AddSubMenuItem("Stop", "")
 	go func() {
 		for {
 			select {
 			case <-stopItem.ClickedCh:
-				StopTask(activeTask.Id, client)
+				err := StopTask(activeTask.Id, client)
+				if err == nil {
+					SetupMenu(client, recentMenu, activeMenu)
+				}
 			}
 		}
 	}()
@@ -138,20 +145,6 @@ func SetupMenu(client http.Client) {
 		activeMenu.Enable()
 		activeEntry.SetTitle(activeTask.TextOutput())
 	}
-
-	systray.AddSeparator()
-	refreshAction := systray.AddMenuItem("Refresh", "Refresh the menu")
-	systray.AddSeparator()
-	systray.AddMenuItem("Quit", "Quit the whole app")
-
-	go func() {
-		for {
-			select {
-			case <-refreshAction.ClickedCh:
-				SetupMenu(client)
-			}
-		}
-	}()
 }
 
 func GetMenuState(client http.Client) {
