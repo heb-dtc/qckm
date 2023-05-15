@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/heb-dtc/systray"
 	"gopkg.in/yaml.v2"
@@ -49,14 +51,34 @@ type Project struct {
 }
 
 type Task struct {
-	Id       int      `json:"id"`
-	Activity Activity `json:"activity"`
-	Project  Project  `json:"project"`
+	Id        int      `json:"id"`
+	Activity  Activity `json:"activity"`
+	Project   Project  `json:"project"`
+	StartTime string   `json:"begin"`
 }
 
 func (t Task) TextOutput() string {
 	p := fmt.Sprintf("[%s] %s", t.Project.Name, t.Activity.Name)
 	return p
+}
+
+func (t Task) TaskDuration() string {
+	// format StartTime to match RFC3339 format -> YYYY:MM:DDTHH:MM:SS+00:00
+	var builder strings.Builder
+	for index, char := range t.StartTime {
+		builder.WriteString(string(char))
+		if index == len(activeTask.StartTime)-3 {
+			builder.WriteString(":")
+		}
+	}
+	timeString := builder.String()
+
+	taskTime, _ := time.Parse(time.RFC3339, timeString)
+	duration := time.Since(taskTime)
+
+    hours := int(duration.Seconds() / 3600)
+    minutes := int(duration.Seconds() / 60) % 60
+	return fmt.Sprintf("%d:%d h", hours, minutes)
 }
 
 func main() {
@@ -125,25 +147,24 @@ func SetupMenu(client http.Client, recentMenu *systray.MenuItem, activeMenu *sys
 		i++
 	}
 
-	activeEntry := activeMenu.AddSubMenuItem(activeTask.TextOutput(), "")
-	stopItem := activeMenu.AddSubMenuItem("Stop", "")
-	go func() {
-		for {
-			select {
-			case <-stopItem.ClickedCh:
-				err := StopTask(activeTask.Id, client)
-				if err == nil {
-					SetupMenu(client, recentMenu, activeMenu)
-				}
-			}
-		}
-	}()
-
 	if activeTask.Id <= 0 {
 		activeMenu.Disable()
 	} else {
 		activeMenu.Enable()
-		activeEntry.SetTitle(activeTask.TextOutput())
+		activeTaskItem := fmt.Sprintf("%s (%s)", activeTask.TextOutput(), activeTask.TaskDuration())
+		activeMenu.AddSubMenuItem(activeTaskItem, "")
+		stopItem := activeMenu.AddSubMenuItem("Stop", "")
+		go func() {
+			for {
+				select {
+				case <-stopItem.ClickedCh:
+					err := StopTask(activeTask.Id, client)
+					if err == nil {
+						SetupMenu(client, recentMenu, activeMenu)
+					}
+				}
+			}
+		}()
 	}
 }
 
